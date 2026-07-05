@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnacoEs | Comando Central</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .tab { display: none; } .tab.active { display: block; }
+        body { background: #020617; color: white; font-family: sans-serif; }
+        .btn-tool { @apply bg-slate-800 p-2 rounded text-[9px] font-bold border border-slate-700 hover:bg-blue-900 transition text-center; }
+    </style>
+</head>
+<body class="p-2">
+    <!-- NAVEGACIÓN -->
+    <nav class="grid grid-cols-5 gap-1 mb-4">
+        <button onclick="show('mapa')" class="bg-blue-900 p-2 rounded text-[8px] font-bold uppercase">Mapa</button>
+        <button onclick="show('sos')" class="bg-red-900 p-2 rounded text-[8px] font-bold uppercase">SOS</button>
+        <button onclick="show('com')" class="bg-amber-900 p-2 rounded text-[8px] font-bold uppercase">Com</button>
+        <button onclick="show('log')" class="bg-green-900 p-2 rounded text-[8px] font-bold uppercase">Log</button>
+        <button onclick="show('tec')" class="bg-slate-700 p-2 rounded text-[8px] font-bold uppercase">Tec</button>
+    </nav>
+
+    <!-- MAPA -->
+    <div id="mapa" class="tab active">
+        <div id="map" class="h-64 rounded-xl border border-slate-700 mb-2"></div>
+        <div id="logs" class="text-[10px] bg-slate-900 p-2 rounded h-40 overflow-y-auto font-mono">Cargando datos...</div>
+    </div>
+
+    <!-- SOS -->
+    <div id="sos" class="tab space-y-4">
+        <button onclick="enviarSOS()" class="w-full bg-red-600 p-10 rounded-2xl font-black text-2xl animate-pulse">ALERTA SOS</button>
+        <div class="grid grid-cols-3 gap-2">
+            <button onclick="report('BIEN')" class="bg-green-800 p-4 rounded text-xs">✅ BIEN</button>
+            <button onclick="report('AYUDA')" class="bg-yellow-700 p-4 rounded text-xs">⚠️ AYUDA</button>
+            <button onclick="report('PELIGRO')" class="bg-red-800 p-4 rounded text-xs">🚨 PELIGRO</button>
+        </div>
+    </div>
+
+    <!-- COMUNIDAD (10 herramientas) -->
+    <div id="com" class="tab grid grid-cols-2 gap-2">
+        <button class="btn-tool">📢 Avisos</button><button class="btn-tool">👥 Voluntarios</button>
+        <button class="btn-tool">🏥 Hospitales</button><button class="btn-tool">💧 Agua</button>
+        <button class="btn-tool">🔥 Incendios</button><button class="btn-tool">📡 Radio</button>
+        <button class="btn-tool">🛡️ Refugios</button><button class="btn-tool">📰 Rumores</button>
+        <button class="btn-tool">📞 PC</button><button class="btn-tool">📦 Donaciones</button>
+    </div>
+
+    <!-- LOGISTICA (10 herramientas) -->
+    <div id="log" class="tab grid grid-cols-2 gap-2">
+        <button class="btn-tool">📍 Rutas</button><button class="btn-tool">⏱️ Tiempos</button>
+        <button class="btn-tool">🔦 Kit</button><button class="btn-tool">🩸 Sangre</button>
+        <button class="btn-tool">🔋 Batería</button><button class="btn-tool">🚧 Vías</button>
+        <button class="btn-tool">⚡ Electricidad</button><button class="btn-tool">📶 Redes</button>
+        <button class="btn-tool">🗺️ Evacuación</button><button class="btn-tool">🚁 Transporte</button>
+    </div>
+
+    <!-- TECNICO (10 herramientas) -->
+    <div id="tec" class="tab grid grid-cols-2 gap-2">
+        <button class="btn-tool">💾 Backup</button><button class="btn-tool">⚙️ Bot</button>
+        <button class="btn-tool">📊 SITREP</button><button class="btn-tool">🔄 Sync</button>
+        <button class="btn-tool">📁 Logs</button><button class="btn-tool">🛰️ GPS</button>
+        <button class="btn-tool">📡 Offline</button><button class="btn-tool">🛡️ Admin</button>
+        <button class="btn-tool">📝 Guía</button><button class="btn-tool">📱 PWA</button>
+    </div>
+
+    <script>
+        // CONFIGURA TUS DATOS DE TELEGRAM AQUÍ
+        const TOKEN = "TU_TOKEN_AQUI"; 
+        const CHAT = "TU_CHAT_ID_AQUI";
+
+        function show(id) { 
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); 
+            document.getElementById(id).classList.add('active'); 
+        }
+
+        const map = L.map('map').setView([10.48, -66.90], 6);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+        async function init() {
+            try {
+                const res = await fetch("https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minlatitude=0&maxlatitude=16&minlongitude=-74&maxlongitude=-58&limit=10");
+                const data = await res.json();
+                const log = document.getElementById('logs');
+                data.features.forEach(f => {
+                    log.innerHTML += `<div class="border-b border-slate-800 p-1">${f.properties.mag}M - ${f.properties.place}</div>`;
+                    L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {radius: 6, color: 'red'}).addTo(map);
+                });
+            } catch(e) { document.getElementById('logs').innerText = "Error cargando datos."; }
+        }
+
+        function enviarSOS() {
+            if(!navigator.geolocation) return alert("GPS desactivado.");
+            navigator.geolocation.getCurrentPosition(pos => {
+                fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT}&text=🆘 SOS AnacoEs: ${pos.coords.latitude},${pos.coords.longitude}`);
+                alert("Alerta enviada.");
+            });
+        }
+
+        function report(est) { alert("Estado: " + est); }
+        init();
+    </script>
+</body>
+</html>
