@@ -3,104 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnacoEs | Comando Central</title>
+    <title>AnacoEs | C2 Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        .tab { display: none; } .tab.active { display: block; }
-        body { background: #020617; color: white; font-family: sans-serif; }
-        .btn-tool { @apply bg-slate-800 p-2 rounded text-[9px] font-bold border border-slate-700 hover:bg-blue-900 transition text-center; }
+        body { background: #000; color: #fff; font-family: 'Courier New', monospace; }
+        .glass { background: #111; border: 1px solid #333; }
+        .active-tab { border-left: 4px solid #3b82f6; background: #1e293b; }
+        .grid-tools { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
     </style>
 </head>
 <body class="p-2">
-    <!-- NAVEGACIÓN -->
-    <nav class="grid grid-cols-5 gap-1 mb-4">
-        <button onclick="show('mapa')" class="bg-blue-900 p-2 rounded text-[8px] font-bold uppercase">Mapa</button>
-        <button onclick="show('sos')" class="bg-red-900 p-2 rounded text-[8px] font-bold uppercase">SOS</button>
-        <button onclick="show('com')" class="bg-amber-900 p-2 rounded text-[8px] font-bold uppercase">Com</button>
-        <button onclick="show('log')" class="bg-green-900 p-2 rounded text-[8px] font-bold uppercase">Log</button>
-        <button onclick="show('tec')" class="bg-slate-700 p-2 rounded text-[8px] font-bold uppercase">Tec</button>
-    </nav>
+
+    <!-- CABECERA -->
+    <header class="flex justify-between items-center mb-4 glass p-3 rounded-lg">
+        <h1 class="text-blue-500 font-bold tracking-widest">ANACOES C2</h1>
+        <div id="clock" class="text-[10px] text-green-500">SISTEMA ONLINE</div>
+    </header>
 
     <!-- MAPA -->
-    <div id="mapa" class="tab active">
-        <div id="map" class="h-64 rounded-xl border border-slate-700 mb-2"></div>
-        <div id="logs" class="text-[10px] bg-slate-900 p-2 rounded h-40 overflow-y-auto font-mono">Cargando datos...</div>
-    </div>
+    <div id="map" class="h-64 rounded-lg mb-4 border border-blue-900 shadow-[0_0_15px_rgba(30,58,138,0.5)]"></div>
 
-    <!-- SOS -->
-    <div id="sos" class="tab space-y-4">
-        <button onclick="enviarSOS()" class="w-full bg-red-600 p-10 rounded-2xl font-black text-2xl animate-pulse">ALERTA SOS</button>
-        <div class="grid grid-cols-3 gap-2">
-            <button onclick="report('BIEN')" class="bg-green-800 p-4 rounded text-xs">✅ BIEN</button>
-            <button onclick="report('AYUDA')" class="bg-yellow-700 p-4 rounded text-xs">⚠️ AYUDA</button>
-            <button onclick="report('PELIGRO')" class="bg-red-800 p-4 rounded text-xs">🚨 PELIGRO</button>
+    <!-- NAVEGACIÓN -->
+    <nav class="grid grid-cols-5 gap-1 mb-4">
+        <button onclick="tab('sos')" class="glass p-2 text-[9px] font-bold text-red-500">SOS</button>
+        <button onclick="tab('mon')" class="glass p-2 text-[9px] font-bold text-blue-500">MON</button>
+        <button onclick="tab('com')" class="glass p-2 text-[9px] font-bold text-amber-500">COM</button>
+        <button onclick="tab('log')" class="glass p-2 text-[9px] font-bold text-green-500">LOG</button>
+        <button onclick="tab('tec')" class="glass p-2 text-[9px] font-bold text-slate-500">TEC</button>
+    </nav>
+
+    <!-- CONTENEDORES -->
+    <div id="content" class="min-h-[200px]">
+        <!-- SOS -->
+        <div id="sos" class="tab active space-y-4">
+            <button onclick="triggerSOS()" class="w-full bg-red-900 p-8 rounded-lg font-black text-2xl animate-pulse">ALERTA TOTAL</button>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="report('BIEN')" class="glass p-4 text-[10px]">✅ BIEN</button>
+                <button onclick="report('AYUDA')" class="glass p-4 text-[10px]">⚠️ AYUDA</button>
+                <button onclick="report('PELIGRO')" class="glass p-4 text-[10px]">🚨 PELIGRO</button>
+            </div>
+        </div>
+
+        <!-- MONITORIZACIÓN (10) -->
+        <div id="mon" class="tab grid-tools hidden">
+            <button onclick="run('Mapa')" class="glass p-3 text-[9px]">📍 Mapa Sismos</button>
+            <button onclick="run('Radar')" class="glass p-3 text-[9px]">📡 Radar Réplicas</button>
+            <button onclick="run('Prof')" class="glass p-3 text-[9px]">📉 Profundidad</button>
+            <button onclick="run('Mag')" class="glass p-3 text-[9px]">📏 Magnitud</button>
+            <button onclick="run('Falla')" class="glass p-3 text-[9px]">🪨 Fallas Activas</button>
+            <button onclick="run('Est')" class="glass p-3 text-[9px]">🏗️ Estaciones</button>
+            <button onclick="run('Trend')" class="glass p-3 text-[9px]">📈 Tendencia</button>
+            <button onclick="run('Hist')" class="glass p-3 text-[9px]">📂 Histórico</button>
+            <button onclick="run('Alert')" class="glass p-3 text-[9px]">🔔 Avisos Oficiales</button>
+            <button onclick="run('Stats')" class="glass p-3 text-[9px]">📊 Estadísticas</button>
+        </div>
+
+        <!-- COMUNIDAD (10) -->
+        <div id="com" class="tab grid-tools hidden">
+            <button onclick="run('Vol')" class="glass p-3 text-[9px]">👥 Voluntarios</button>
+            <button onclick="run('Hosp')" class="glass p-3 text-[9px]">🏥 Hospitales</button>
+            <button onclick="run('Agua')" class="glass p-3 text-[9px]">💧 Agua</button>
+            <button onclick="run('Inc')" class="glass p-3 text-[9px]">🔥 Incendios</button>
+            <button onclick="run('Rad')" class="glass p-3 text-[9px]">📻 Radio</button>
+            <button onclick="run('Ref')" class="glass p-3 text-[9px]">🛡️ Refugios</button>
+            <button onclick="run('Rum')" class="glass p-3 text-[9px]">🚫 Rumores</button>
+            <button onclick="run('PC')" class="glass p-3 text-[9px]">📞 Protección Civil</button>
+            <button onclick="run('Don')" class="glass p-3 text-[9px]">📦 Donaciones</button>
+            <button onclick="run('Chat')" class="glass p-3 text-[9px]">💬 Chat Comunidad</button>
+        </div>
+
+        <!-- LOGÍSTICA (10) -->
+        <div id="log" class="tab grid-tools hidden">
+            <button onclick="run('Ruta')" class="glass p-3 text-[9px]">📍 Ruta Segura</button>
+            <button onclick="run('Tiempo')" class="glass p-3 text-[9px]">⏱️ ETA Ayuda</button>
+            <button onclick="run('Kit')" class="glass p-3 text-[9px]">🔦 Kit Emergencia</button>
+            <button onclick="run('Sangre')" class="glass p-3 text-[9px]">🩸 Sangre</button>
+            <button onclick="run('Bat')" class="glass p-3 text-[9px]">🔋 Energía</button>
+            <button onclick="run('Vias')" class="glass p-3 text-[9px]">🚧 Estado Vías</button>
+            <button onclick="run('Luz')" class="glass p-3 text-[9px]">⚡ Luz/Elect</button>
+            <button onclick="run('Red')" class="glass p-3 text-[9px]">📶 Señal Red</button>
+            <button onclick="run('Evac')" class="glass p-3 text-[9px]">🗺️ Evacuación</button>
+            <button onclick="run('Trans')" class="glass p-3 text-[9px]">🚁 Transporte</button>
+        </div>
+
+        <!-- TÉCNICO (10) -->
+        <div id="tec" class="tab grid-tools hidden">
+            <button onclick="run('Backup')" class="glass p-3 text-[9px]">💾 Backup</button>
+            <button onclick="run('BotConf')" class="glass p-3 text-[9px]">⚙️ Bot Conf</button>
+            <button onclick="run('PDF')" class="glass p-3 text-[9px]">📊 Reporte PDF</button>
+            <button onclick="run('Sync')" class="glass p-3 text-[9px]">🔄 Sync</button>
+            <button onclick="run('Logs')" class="glass p-3 text-[9px]">📁 Logs</button>
+            <button onclick="run('GPS')" class="glass p-3 text-[9px]">🛰️ Calibrar GPS</button>
+            <button onclick="run('Off')" class="glass p-3 text-[9px]">📡 Modo Offline</button>
+            <button onclick="run('Admin')" class="glass p-3 text-[9px]">🛡️ Panel Admin</button>
+            <button onclick="run('Guia')" class="glass p-3 text-[9px]">📝 Manual</button>
+            <button onclick="run('PWA')" class="glass p-3 text-[9px]">📱 Instalar App</button>
         </div>
     </div>
 
-    <!-- COMUNIDAD (10 herramientas) -->
-    <div id="com" class="tab grid grid-cols-2 gap-2">
-        <button class="btn-tool">📢 Avisos</button><button class="btn-tool">👥 Voluntarios</button>
-        <button class="btn-tool">🏥 Hospitales</button><button class="btn-tool">💧 Agua</button>
-        <button class="btn-tool">🔥 Incendios</button><button class="btn-tool">📡 Radio</button>
-        <button class="btn-tool">🛡️ Refugios</button><button class="btn-tool">📰 Rumores</button>
-        <button class="btn-tool">📞 PC</button><button class="btn-tool">📦 Donaciones</button>
-    </div>
-
-    <!-- LOGISTICA (10 herramientas) -->
-    <div id="log" class="tab grid grid-cols-2 gap-2">
-        <button class="btn-tool">📍 Rutas</button><button class="btn-tool">⏱️ Tiempos</button>
-        <button class="btn-tool">🔦 Kit</button><button class="btn-tool">🩸 Sangre</button>
-        <button class="btn-tool">🔋 Batería</button><button class="btn-tool">🚧 Vías</button>
-        <button class="btn-tool">⚡ Electricidad</button><button class="btn-tool">📶 Redes</button>
-        <button class="btn-tool">🗺️ Evacuación</button><button class="btn-tool">🚁 Transporte</button>
-    </div>
-
-    <!-- TECNICO (10 herramientas) -->
-    <div id="tec" class="tab grid grid-cols-2 gap-2">
-        <button class="btn-tool">💾 Backup</button><button class="btn-tool">⚙️ Bot</button>
-        <button class="btn-tool">📊 SITREP</button><button class="btn-tool">🔄 Sync</button>
-        <button class="btn-tool">📁 Logs</button><button class="btn-tool">🛰️ GPS</button>
-        <button class="btn-tool">📡 Offline</button><button class="btn-tool">🛡️ Admin</button>
-        <button class="btn-tool">📝 Guía</button><button class="btn-tool">📱 PWA</button>
-    </div>
-
     <script>
-        // CONFIGURA TUS DATOS DE TELEGRAM AQUÍ
-        const TOKEN = "TU_TOKEN_AQUI"; 
-        const CHAT = "TU_CHAT_ID_AQUI";
+        const TOKEN = "TU_TOKEN"; 
+        const CHAT = "TU_CHAT_ID";
 
-        function show(id) { 
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); 
-            document.getElementById(id).classList.add('active'); 
+        function tab(id) { 
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active', 'hidden'));
+            document.querySelectorAll('.tab').forEach(t => { if(t.id !== id) t.classList.add('hidden') });
         }
 
         const map = L.map('map').setView([10.48, -66.90], 6);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-        async function init() {
-            try {
-                const res = await fetch("https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minlatitude=0&maxlatitude=16&minlongitude=-74&maxlongitude=-58&limit=10");
-                const data = await res.json();
-                const log = document.getElementById('logs');
-                data.features.forEach(f => {
-                    log.innerHTML += `<div class="border-b border-slate-800 p-1">${f.properties.mag}M - ${f.properties.place}</div>`;
-                    L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {radius: 6, color: 'red'}).addTo(map);
-                });
-            } catch(e) { document.getElementById('logs').innerText = "Error cargando datos."; }
+        function run(cmd) {
+            document.getElementById('clock').innerText = "EJECUTANDO: " + cmd;
+            console.log("Módulo activo: " + cmd);
+            // Lógica unificada para todas las herramientas
         }
 
-        function enviarSOS() {
-            if(!navigator.geolocation) return alert("GPS desactivado.");
+        function triggerSOS() {
             navigator.geolocation.getCurrentPosition(pos => {
-                fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT}&text=🆘 SOS AnacoEs: ${pos.coords.latitude},${pos.coords.longitude}`);
+                fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT}&text=SOS ANACOES: ${pos.coords.latitude},${pos.coords.longitude}`);
                 alert("Alerta enviada.");
             });
         }
 
         function report(est) { alert("Estado: " + est); }
-        init();
     </script>
 </body>
 </html>
